@@ -120,8 +120,8 @@ class TextProcessing:
     def run(self, file_name: str, version: int):
         """Runs the entire text processing pipeline."""
         name_data_input = f"{file_name}"
-        PATH_DATA_RAW = "/Users/mdurango/Proyect/Mlops-platzi/orchestration/data/data_raw"
-        PATH_DATA_PROCESSED = "/Users/mdurango/Proyect/Mlops-platzi/orchestration/data/data_processed"
+        PATH_DATA_RAW = "/home/sebastian/Desktop/For_studyng/MLOPS_MLdeploy/Mlops-platzi/orchestration/data/data_raw"
+        PATH_DATA_PROCESSED = "/home/sebastian/Desktop/For_studyng/MLOPS_MLdeploy/Mlops-platzi/orchestration/data/data_processed"
         # reading JSON data
         data_tickets = self.read_json(
             path=PATH_DATA_RAW, file_name=f"{name_data_input}.json"

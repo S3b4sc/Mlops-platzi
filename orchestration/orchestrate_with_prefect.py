@@ -25,10 +25,10 @@ from text_processing import TextProcessing
 warnings.filterwarnings("ignore")
 
 
-@task(retries=3, retry_delay_seconds=2,
+@task(retries=3, retry_delay_seconds=2,             #Create the first task, esta procesa los datos eliminando palabras vacías
       name="Text processing task", 
       tags=["pos_tag"])
-def text_processing_task(language: str, file_name: str, version: int):
+def text_processing_task(language: str, file_name: str, version: int):          #Inside the task use the class for text processing.
     """This task is used to run the text processing process
     Args:
         language (str): language of the text
@@ -39,7 +39,7 @@ def text_processing_task(language: str, file_name: str, version: int):
     text_processing_processor = TextProcessing(language=language)
     text_processing_processor.run(file_name=file_name, version=version)
 
-@task(retries=3, retry_delay_seconds=2,
+@task(retries=3, retry_delay_seconds=2,             #here again we use other pre defined class for this task, esta reduce el numero de labels
       name="Feature extraction task", 
       tags=["feature_extraction", "topic_modeling"])
 def feature_extraction_task(data_path_processed: str, 
@@ -83,7 +83,7 @@ def data_transformation_task_and_split(data_input_path: str, file_name: str, ver
     print("Data transformation and split task successfully completed")
     return X_train, X_test, y_train, y_test, count_vectorizer
 
-@task(
+@task(                                  #Tarea asociada el entrenamietno del mejor modelo
     retries=3,
     retry_delay_seconds=2,
     name="Train best model",
@@ -97,15 +97,15 @@ def training_best_model(
     params: dict,
     model_name: str,
 ):
-    with mlflow.start_run(run_name=model_name):
+    with mlflow.start_run(run_name=model_name):                 #Satr the experiment
         mlflow.set_tag("developer", DEVELOPER_NAME)
-        mlflow.set_tag("model_name", MODEL_NAME)
+        mlflow.set_tag("model_name", MODEL_NAME)            #Set some tags
         mlflow.log_params(params)
 
         model = LogisticRegression(**params)
         model.fit(X_train, y_train)
 
-        y_train_pred_proba = model.predict_proba(X_train)
+        y_train_pred_proba = model.predict_proba(X_train)                   #TRain and predict
         y_test_pred_proba = model.predict_proba(X_test)
 
         roc_auc_score_train = round(
@@ -131,7 +131,7 @@ def training_best_model(
             y_test, y_test_pred, average="weighted"
         )
 
-        mlflow.log_metrics(
+        mlflow.log_metrics(                                     #Save the obatained metrics
             {
                 "roc_auc_train": roc_auc_score_train,
                 "roc_auc_test": roc_auc_score_test,
@@ -140,10 +140,10 @@ def training_best_model(
             }
         )
 
-        mlflow.sklearn.log_model(model, f"model_{MODEL_NAME}")
+        mlflow.sklearn.log_model(model, f"model_{MODEL_NAME}")              #Save the model as an artifact 
 
         # save model
-        save_pickle(model, "model_lr")
+        save_pickle(model, "model_lr")                              #guardar el modelo cmoo un picke
 
         metric_data = [
             roc_auc_score_train,
@@ -168,21 +168,30 @@ def training_best_model(
         return metric_data
 
 
-@flow
+@flow                           #Now we define the complete flux
 def main_flow():
+    
+    #First transform the data
+    #first task
     text_processing_task(language = LANGUAGE, file_name = FILE_NAME_DATA_INPUT, version = VERSION)
+    #Second task
     feature_extraction_task(data_path_processed = DATA_PATH_PROCESSED,
                             data_version = VERSION)
+    
+    #Third task
     X_train, X_test, y_train, y_test, count_vectorizer = data_transformation_task_and_split(
         data_input_path=DATA_PATH_PROCESSED,
         file_name="tickets_inputs_eng_",
         version=VERSION
     )
+    
+    #Save the data
     save_pickle((X_train, y_train), "train")
     save_pickle((X_test, y_test),  "test")
     save_pickle(count_vectorizer, "count_vectorizer")
     print("Data transformation and split task successfully completed and stored in pickle files")
 
+    #Foruth task
     metrics_classification = training_best_model(X_train = X_train, 
                                                 y_train = y_train,
                                                 X_test = X_test,
@@ -192,5 +201,6 @@ def main_flow():
     print(metrics_classification)
 
 
+#runn the flow
 main_flow()
 
