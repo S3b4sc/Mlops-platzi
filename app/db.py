@@ -3,21 +3,22 @@ from .config import settings
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
 
-class PredictionsTickets(SQLModel, table=True):
+class PredictionsTickets(SQLModel, table=True):         #We create a table  by this class
     """
     Table Model for Prediction Tickets.
 
     This class represents a table in the database to store
     predictions associated with client names.
     """
-    id: int | None = Field(default=None, primary_key=True)
+    #Define the fields of the table
+    id: int | None = Field(default=None, primary_key=True)      #Created by defect its not an entry is the primarykey autoincrement
     client_name: str 
     prediction: str
 
 # connect_args = {"check_same_thread": False}
-engine = create_engine(settings.db_url, echo=True)
+engine = create_engine(settings.db_url, echo=True)          #Make the connection given the data base url
 
-
+#This fucntions created the data base
 def create_db_and_tables():
     """
     Create tables in the database.

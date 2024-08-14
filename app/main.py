@@ -7,7 +7,10 @@ from app.utils import preprocessing_fn
 from sqlmodel import Session, select
 from enum import Enum
 
+#Create the app
 app = FastAPI(title="FastAPI, Docker, and Traefik")
+
+#set global variable, the dicctionary to reference mapping the labels
 global label_mapping
 
 label_mapping = {
@@ -20,7 +23,7 @@ class Sentence(BaseModel):
     client_name: str
     text: str 
 
-# define data structure for request 
+# define data structure for request, a list becasue is loaded by batches, so there will be several entries. 
 class ProcessTextRequestModel(BaseModel):
     sentences: list[Sentence]
 
@@ -28,12 +31,15 @@ class ProcessTextRequestModel(BaseModel):
 @app.post("/predict")
 async def read_root(data: ProcessTextRequestModel):
 
+    #Start eh session in the data base
     session = Session(engine)
     
+    #Read the model using joblib
     model = joblib.load("model.pkl")
 
     preds_list = []
-
+    
+    #Now we process the entry data
     for sentence in data.sentences: 
         processed_data_vectorized = preprocessing_fn(sentence.text)
         X_dense = [sparse_matrix.toarray() for sparse_matrix in processed_data_vectorized]
